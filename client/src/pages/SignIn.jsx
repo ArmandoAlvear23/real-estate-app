@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice.js";
 
 export default function SignIn() {
 
   // Initialize state for form data
   const [formData, setFormData] = useState({});
 
-  // Initialize state for errors
-  const [error, setError] = useState(null);
-
-  // Initialize state for is loading 
-  const [isLoading, setIsLoading] = useState(false);
+  const { loading, error } = useSelector((state) => state.user);
 
   // Initialize navigate
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
 
   // Update form data state on input change
   const handleChange = (e) => {
@@ -30,7 +30,7 @@ export default function SignIn() {
 
     try {
       // Set is loading to true
-      setIsLoading(true);
+      dispatch(signInStart());
       // Send signin POST request to API endpoint
       const res = await fetch("/api/auth/signin", {
         method: 'POST',
@@ -43,24 +43,18 @@ export default function SignIn() {
       const data = await res.json();
       // Check if request is unsuccessful
       if (data.success === false) {
-        // Set is loading state to false
-        setIsLoading(false);
-        // Set error state to response data error message
-        setError(data.message);
+        // Set loading to false and send error message
+        dispatch(signInFailure(data.message));
         // Return out of try block
         return;
       }
-      // Set is loading state to false
-      setIsLoading(false);
-      // Set error state to null
-      setError(null);
+      // Set loading to false, error to null, and send data
+      dispatch(signInSuccess(data));
       // Navigate to the home page
       navigate("/");
     } catch (error) {
-      // Set is loading state to false
-      setIsLoading(false);
-      // Set error state to error message
-      setError(error.message);
+      // Set loading to false and send error message
+      dispatch(signInFailure(error));
     }
   };
 
@@ -83,10 +77,10 @@ export default function SignIn() {
           onChange={handleChange}
         />
         <button 
-          disabled={isLoading} 
+          disabled={loading} 
           className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
         >
-          {isLoading ? 'Signing In...' : 'Sign In'}
+          {loading ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
       <div className="flex gap-2 mt-5">
