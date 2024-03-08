@@ -51,3 +51,55 @@ export const signin = async (req, res, next) => {
     next(error);
   }
 };
+
+// Google account controller
+export const google = async (req, res, next) => {
+  try {
+    // Check to see if Google email is already in database
+    const user = await User.findOne({ email: req.body.email });
+    // If Google email is in database
+    if (user) {
+      // Create JSON web token
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      // Filter out password
+      const { password: pass, ...rest } = user._doc;
+      // Send back access token and user data
+      res
+        .cookie("access_token", token, { httpOnly: true })
+        .status(200)
+        .json(rest);
+    } else {
+      // Create new user using Google email
+      // Create a random 16 character password
+      const generatedPassword =
+        Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).slice(-8);
+      // Hash the password
+      const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
+      // Create a new user
+      const newUser = new User({
+        username:
+          req.body.name.split(" ").join("").toLowerCase() +
+          Math.random().toString(36).slice(-4),
+        email: req.body.email,
+        password: hashedPassword,
+        avatar: req.body.photo,
+      });
+
+      // Save user
+      await newUser.save();
+      // Create JSON web token
+      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
+      // Filter out password
+      const { password: pass, ...rest } = newUser._doc;
+      // Send back access token and user data
+      res
+        .cookie("access_token", token, { httpOnly: true })
+        .status(200)
+        .json(rest);
+    }
+  } catch (error) {
+    // Send back error
+    next(error);
+  }
+};
