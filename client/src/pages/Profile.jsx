@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRef, useState, useEffect } from "react";
 import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
 import { app } from "../firebase";
-import { updateUserStart, updateUserSuccess, updateUserFailure } from "../redux/user/userSlice.js"
+import { updateUserStart, updateUserSuccess, updateUserFailure, deleteUserStart, deleteUserSuccess, deleteUserFailure } from "../redux/user/userSlice.js"
 
 export default function Profile() {
   const fileRef = useRef(null);
@@ -70,6 +70,22 @@ export default function Profile() {
       dispatch(updateUserFailure(error.message));
     }
   }
+
+  const handleDeleteUser = async () => {
+    try {
+      dispatch(deleteUserStart());
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+      });
+      const result = await res.json();
+      if (result.success === false) {
+        dispatch(deleteUserFailure(result.message));
+      }
+      dispatch(deleteUserSuccess());
+    } catch (error) {
+      dispatch(deleteUserFailure(error.message));
+    }
+  }
   
   return (
     <div className="p-3 max-w-lg mx-auto">
@@ -126,7 +142,7 @@ export default function Profile() {
           </button>
       </form>
       <div className="flex justify-between mt-5">
-        <button className="text-red-700 cursor:pointer">Delete Account</button>
+        <button onClick={handleDeleteUser} className="text-red-700 cursor:pointer">Delete Account</button>
         <button className="text-red-700 curosr:pointer">Sign Out</button>
       </div>
       <p className="text-red-700 mt-5">{error ? error : ''}</p>
