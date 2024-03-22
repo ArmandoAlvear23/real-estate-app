@@ -38,8 +38,8 @@ app.listen(serverPort, () => {
 
 // Routers
 app.use("/api/user", userRouter);
-app.use("/api/auth/", authRouter);
-app.use("/api/listing/", listingRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/listing", listingRouter);
 
 // Comprehensive error middleware
 app.use((err, req, res, next) => {
